@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>osp sdk demo</title>
+        <script src="https://cdn-sg-sandbox-osp.advai.net/resource/aai-osp-websdk.iife.js"></script>
+        <style>
+            #osp-wrap {
+                width: 100vw;
+                height: 100vh;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="osp-wrap"></div>
+
+        <script>
+            const container = document.querySelector('#osp-wrap');
+            const osp = AAI_OSP.init(container, {
+                token: 'd089c85a-209e-459a-af1a-51b61014a751', // Obtain the token according to the integration doc
+                environment: 'sandbox',
+                language: 'en',
+                videoRecorder: {
+                    enable: true,
+                    videoBitsPerSecond: 200000,
+                },
+                onReady() {
+                    console.log('onReady');
+                    osp.open();
+                },
+                onLoad() {
+                    console.log('onload');
+                },
+                onError() {
+                    console.error('onerror');
+                },
+                onEvent(data) {
+                    if (data.type === 'video-recorded') {
+                        const videoBlob = URL.createObjectURL(data.data.videoBlob);
+                        // you can upload this videoBlob, like this: 
+                        const formData = new FormData();
+
+                        formData.append('video', videoBlob, 'video.webm');
+
+                        axios.post('/api/upload', formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            },
+                        })
+                        .then(response => {
+                            console.log('Upload successful:', response.data);
+                        })
+                        .catch(error => {
+                            console.error('Upload error:', error);
+                        });
+
+                        // if you want to check this video in you are develop environment, you can like this to use:
+                        /*
+                            const videoUrl = URL.createObjectURL(data.data.videoBlob);
+                            window.open(videoUrl)
+                        */
+                    }
+                },
+                onComplete() {
+                    console.log('workflow complete!');
+                },
+            });
+        </script>
+    </body>
+</html>
